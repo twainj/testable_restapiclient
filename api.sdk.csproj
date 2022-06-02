@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+        <Compile Remove="**\*.test.cs" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <PackageReference Include="RestSharp" Version="107.3.0" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="'$(Configuration)' != 'Release'">
+      <PackageReference Include="AutoFixture" Version="4.17.0" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.2.0" />
+      <PackageReference Include="Moq" Version="4.18.0" />
+      <PackageReference Include="xunit" Version="2.4.1" />
+    </ItemGroup>
+    
+    <ItemGroup>
+      <ProjectReference Include="..\api.data\api.data.csproj" />
+    </ItemGroup>
+    
+
+</Project>
