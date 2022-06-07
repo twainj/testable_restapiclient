@@ -1,4 +1,5 @@
 ﻿using api.sdk.Dependencies.RestClient;
+using api.sdk.Extensions;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -22,6 +23,7 @@ public class MyApiClient : IMyApiClient
 		var request = GetRequest(method, endpoint);
 		if (body != null) {
 			request.AddJsonBody(body);
+			 request.AddHeader("Content-Length", request.GetBody().Length.ToString());
 		}
 
 		if (!string.IsNullOrEmpty(Token)) {
@@ -38,7 +40,9 @@ public class MyApiClient : IMyApiClient
 			ResponseCode = response.StatusCode,
 			Message = response.ErrorMessage
 		};
-		LastError = string.IsNullOrEmpty(response.ErrorMessage) ? null : response.ErrorMessage;
+		LastError = !ret.Success && string.IsNullOrEmpty(response.ErrorMessage) 
+			? ret.DisplayResponseCode() 
+			: response.ErrorMessage;
 		
 		if (ret.Success && !string.IsNullOrEmpty(response.Content)) {
 			var doc = JsonDocument.Parse(response.Content);

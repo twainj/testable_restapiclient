@@ -36,6 +36,29 @@ public class MyApiClient_test
 			It.IsAny<CancellationToken>()
 		));
 	}
+		[Fact]
+	public async Task MakeRequestAsync_body_ShouldMakeRestRequestWithProperContentLength() {
+		// Setup
+		var mockClient = new Mock<IRestClient>();
+		mockClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+			.ReturnsAsync((RestRequest _, CancellationToken _) => new RestResponse(F.Create<HttpStatusCode>()));
+		var sut = SetupSutWithMockRestClient(mockClient);
+		
+		// Test
+		var (endpoint, body) = (F.Create<string>(), new {foo = "bar", stuff = "thing"});
+		await sut.MakeRequestAsync<int>(HttpMethod.Get, endpoint, body);
+
+		// Verify
+		var encodedParams = @"{""foo"":""bar"",""stuff"":""thing""}";
+		mockClient.Verify(x => x.ExecuteAsync(
+			It.Is<IRestRequest>(r => r.Method == HttpMethod.Get 
+				&& r.Resource == endpoint
+				&& r.GetBody() == encodedParams
+				&& r.GetHeaders().Any(p => p.Key == "Content-Length" && p.Value == encodedParams.Length.ToString())
+			),
+			It.IsAny<CancellationToken>()
+		));
+	}
 	
 	[Fact]
 	public async Task MakeRequestAsync_dict_ShouldMakeRestRequestWithSpecifiedParameters() {
@@ -143,6 +166,24 @@ public class MyApiClient_test
 		// Verify
 		Assert.False(response.Success);
 		Assert.Equal(errorMsg, sut.LastError);
+	}
+
+	[Fact]
+	public async Task MakeRequestAsync_ShouldHaveLastErrorDefaultToErrorCodeStringWhenFailedButNoDescriptiveMessage() {
+		// Setup
+		var mocklClient = new Mock<IRestClient>();
+		var errorMsg = F.Create<string>();
+		mocklClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+			.ReturnsAsync((RestRequest _, CancellationToken _) => new RestResponse (HttpStatusCode.InternalServerError));
+		var sut = SetupSutWithMockRestClient(mocklClient);
+		
+		// Test
+		var (m, e, b) = (F.Create<HttpMethod>(), F.Create<string>(), F.Create<string>());
+		var response = await sut.MakeRequestAsync<int>(m, e, b);
+		
+		// Verify
+		Assert.False(response.Success);
+		Assert.Equal("Internal Server Error", sut.LastError);
 	}
 	
 	[Fact]
