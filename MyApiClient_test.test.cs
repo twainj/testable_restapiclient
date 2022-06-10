@@ -232,6 +232,29 @@ public class MyApiClient_test
 		Assert.Equal(testObj.Bar, response.Result!.Bar);
 		Assert.Equal(testObj.Baz, response.Result!.Baz);
 	}
+
+	[Fact]
+	public async Task MakeRequestAsync_ShouldReturnNullResultIfEndpointDoesntSupplyIt() {
+		// Setup
+		var mockClient = new Mock<IRestClient>();
+		var testObj = F.Create<TestReturnValue>();
+		mockClient.Setup(x => x.ExecuteAsync(It.IsAny<RestRequest>(), It.IsAny<CancellationToken>()))
+			.ReturnsAsync((RestRequest _, CancellationToken _) => new RestResponse (
+				HttpStatusCode.OK,
+				null,
+				JsonSerializer.Serialize(new {
+					success = true
+				})
+			));
+		var sut = SetupSutWithMockRestClient(mockClient);
+		
+		// Test
+		var (method, endpoint, body) = (F.Create<HttpMethod>(), F.Create<string>(), F.Create<string>());
+		var response = await sut.MakeRequestAsync<TestReturnValue>(method, endpoint, body);
+		
+		// Verify
+		Assert.Null(response.Result);
+	}
 	
 
 	#region Helpers

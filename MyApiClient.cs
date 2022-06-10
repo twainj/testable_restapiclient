@@ -49,7 +49,8 @@ public class MyApiClient : IMyApiClient
 			ret.Success &= doc.RootElement.GetProperty("success").GetBoolean();
 			if(doc.RootElement.TryGetProperty("message", out var msgElement))
 				ret.Message = msgElement.GetString();
-			ret.Result = doc.RootElement.GetProperty("result").Deserialize<T>(_config.JsonOptions);
+			if(doc.RootElement.TryGetProperty("result", out var resultEl))
+				ret.Result = resultEl.Deserialize<T>(_config.JsonOptions);
 		}
 		
 
